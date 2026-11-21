@@ -432,15 +432,9 @@ with st.sidebar:
         accept_multiple_files=True
     )
 
-    api_key = st.text_input(
-        "Groq API Key",
-        type="password"
-    )
+   api_key = st.secrets["GROQ_API_KEY"]
 
-    st.caption(
-        "Your API key is entered for this session only."
-    )
-
+   
     st.divider()
 
     st.markdown("### 🚀 RAG Pipeline")
