@@ -431,8 +431,7 @@ with st.sidebar:
         type=["pdf"],
         accept_multiple_files=True
     )
-
-   api_key = st.secrets["GROQ_API_KEY"]
+    api_key = st.secrets["GROQ_API_KEY"]
 
    
     st.divider()
