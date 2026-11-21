@@ -23,127 +23,47 @@ st.set_page_config(
 )
 st.markdown("""
 <style>
-    /* Force ALL text to white */
-    .stApp, .stApp p, .stApp div, .stApp span, .stApp label, .stApp h1, .stApp h2, .stApp h3 {
-        color: #FFFFFF !important;
-    }
-    /* Sidebar text */
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] div, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
-        color: #FFFFFF !important;
-    }
-    /* Chat messages - make them readable */
-    [data-testid="stChatMessage"] {
-        background-color: #2E3440 !important;
-        border: 1px solid #4A5568 !important;
-        border-radius: 12px !important;
-    }
-    [data-testid="stChatMessage"] p, [data-testid="stChatMessage"] div, [data-testid="stChatMessage"] span {
-        color: #FFFFFF !important;
-        font-size: 16px !important;
-    }
-    /* Input box - white background, black text */
-    [data-testid="stChatInput"] textarea {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-    }
-    [data-testid="stChatInput"] textarea::placeholder {
-        color: #666666 !important;
-    }
-    /* Metric numbers */
-    [data-testid="stMetricValue"] {
-        color: #FFFFFF !important;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #CBD5E0 !important;
-    }
-    /* File uploader text */
-    [data-testid="stFileUploader"] p, [data-testid="stFileUploader"] div, [data-testid="stFileUploader"] span {
-        color: #FFFFFF !important;
-    }
-    [data-testid="stFileUploader"] section {
-        background-color: #2E3440 !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# --------------------------------------------------
-# PREMIUM PURPLE UI
-# --------------------------------------------------
-
-st.markdown("""
-<style>
 .stApp {
-    background: linear-gradient(
-        135deg,
-        #0b1020,
-        #15132b,
-        #101827
-    );
-    color: #ffffff;
+    background: #FFFFFF !important;
+    color: #262730 !important;
 }
-
-.block-container {
-    max-width: 1150px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+.stApp p, .stApp div, .stApp span, .stApp label, .stApp li {
+    color: #262730 !important;
 }
-
 h1 {
-    color: #c4b5fd !important;
+    color: #FF4B8B !important;
     font-size: 38px !important;
     font-weight: 800 !important;
 }
-
 h2, h3 {
-    color: #e9d5ff !important;
+    color: #262730 !important;
 }
-
 [data-testid="stSidebar"] {
-    background: #111827;
-    border-right: 1px solid #29264a;
+    background: #FFE4EF !important;
 }
-
-.stButton button {
-    background: linear-gradient(90deg, #7c3aed, #9333ea);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
-    font-weight: 700;
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] div, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+    color: #262730 !important;
 }
-
-.stButton button:hover {
-    background: linear-gradient(90deg, #9333ea, #a855f7);
-    color: white;
-    border: none;
-}
-
-[data-testid="stFileUploader"] {
-    background: #1e1b35;
-    padding: 18px;
-    border: 1px dashed #8b5cf6;
-    border-radius: 15px;
-}
-
 [data-testid="stChatMessage"] {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 15px;
-    padding: 12px;
-    margin-bottom: 12px;
+    background-color: #FFF0F5 !important;
+    border: 1px solid #FFC2D9 !important;
+    border-radius: 12px !important;
 }
-
-[data-testid="stExpander"] {
-    background: #1e293b;
-    border: 1px solid #475569;
-    border-radius: 12px;
+[data-testid="stChatMessage"] p, [data-testid="stChatMessage"] div, [data-testid="stChatMessage"] span {
+    color: #262730 !important;
 }
-
-hr {
-    border-color: #39345c;
+.stButton > button {
+    background: #FF4B8B !important;
+    color: white !important;
+    border: none !important;
+}
+[data-testid="stChatInput"] textarea {
+    color: #262730 !important;
+    background-color: #FFFFFF !important;
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # --------------------------------------------------
