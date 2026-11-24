@@ -1,4 +1,6 @@
-
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY_ENABLED"] = "False"
 import streamlit as st
 import numpy as np
 import chromadb
@@ -10,6 +12,12 @@ from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from groq import Groq
+# --- Level 1: Session Library ---
+if "pdf_library" not in st.session_state:
+    st.session_state.pdf_library = {}  # {filename: file_bytes}
+
+if "active_pdf" not in st.session_state:
+    st.session_state.active_pdf = None
 
 
 # --------------------------------------------------
@@ -21,22 +29,14 @@ st.set_page_config(
     page_icon="🤖",
     layout="wide"
 )
-
-
-# --------------------------------------------------
-# PREMIUM PURPLE UI
-# --------------------------------------------------
-
 st.markdown("""
 <style>
 .stApp {
-    background: #FFFFFF;
-    color: #262730;
+    background: #FFFFFF !important;
+    color: #262730 !important;
 }
-.block-container {
-    max-width: 1150px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+.stApp p, .stApp div, .stApp span, .stApp label, .stApp li {
+    color: #262730 !important;
 }
 h1 {
     color: #FF4B8B !important;
@@ -47,19 +47,31 @@ h2, h3 {
     color: #262730 !important;
 }
 [data-testid="stSidebar"] {
-    background: #FFE4EF;
-    border-right: 1px solid #FFC2D9;
+    background: #FFE4EF !important;
+}
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] div, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+    color: #262730 !important;
+}
+[data-testid="stChatMessage"] {
+    background-color: #FFF0F5 !important;
+    border: 1px solid #FFC2D9 !important;
+    border-radius: 12px !important;
+}
+[data-testid="stChatMessage"] p, [data-testid="stChatMessage"] div, [data-testid="stChatMessage"] span {
+    color: #262730 !important;
 }
 .stButton > button {
     background: #FF4B8B !important;
     color: white !important;
     border: none !important;
 }
-p, li, span, label {
+[data-testid="stChatInput"] textarea {
     color: #262730 !important;
+    background-color: #FFFFFF !important;
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # --------------------------------------------------
@@ -427,17 +439,25 @@ with st.sidebar:
         type=["pdf"],
         accept_multiple_files=True
     )
+    api_key = st.secrets["GROQ_API_KEY"]
 
-    api_key = st.text_input(
-        "Groq API Key",
-        type="password"
-    )
-
-    st.caption(
-        "Your API key is entered for this session only."
-    )
-
+   
     st.divider()
+    with st.sidebar:
+        st.markdown("### 📚 My PDFs - This Session")
+        if st.session_state.pdf_library:
+            selected = st.selectbox(
+                "Select a PDF to chat with:",
+                list(st.session_state.pdf_library.keys())
+            )
+            st.session_state.active_pdf = selected
+            st.caption(f"Saved: {len(st.session_state.pdf_library)} PDFs in this session")
+            if st.button("🗑️ Clear All PDFs"):
+                st.session_state.pdf_library = {}
+                st.session_state.active_pdf = None
+                st.rerun()
+            else:
+                st.caption("No PDFs yet. Upload one to start.")   
 
     st.markdown("### 🚀 RAG Pipeline")
 
@@ -465,14 +485,30 @@ st.write(
 # --------------------------------------------------
 
 if uploaded_files:
+        # --- Save to Library ---
+    for f in uploaded_files:
+        if f.name not in st.session_state.pdf_library:
+            st.session_state.pdf_library[f.name] = f.getvalue()
+    if not st.session_state.active_pdf:
+        st.session_state.active_pdf = uploaded_files[-1].name   
 
+    # Use uploaded files, OR the PDF selected in sidebar
+files_to_process = uploaded_files
+if not files_to_process and st.session_state.active_pdf in st.session_state.pdf_library:
+    import io
+    bio = io.BytesIO(st.session_state.pdf_library[st.session_state.active_pdf])
+    bio.name = st.session_state.active_pdf
+    bio.seek(0)
+    st.write("DEBUG bytes:", len(st.session_state.pdf_library[st.session_state.active_pdf]))
+    files_to_process = [bio]
+
+if files_to_process:
     current_signature = hashlib.sha256(
         b"".join(
             hashlib.sha256(file.getvalue()).digest()
-            for file in uploaded_files
+            for file in files_to_process
         )
     ).hexdigest()
-
 else:
     current_signature = None
 
@@ -491,10 +527,10 @@ if current_signature != st.session_state.file_signature:
 # PROCESS DOCUMENTS
 # --------------------------------------------------
 
-if uploaded_files:
+if files_to_process:
 
     st.info(
-        f"📄 {len(uploaded_files)} PDF document(s) selected."
+        f"📄 {len(files_to_process)} PDF document(s) selected."
     )
 
     if st.button("⚡ Process Documents", use_container_width=True):
@@ -505,7 +541,7 @@ if uploaded_files:
                 "Extracting and processing PDF documents..."
             ):
 
-                records = process_pdfs(uploaded_files)
+                records = process_pdfs(files_to_process)
 
                 bm25 = store_documents(records)
 
