@@ -1,4 +1,6 @@
-
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ["CHROMA_TELEMETRY_ENABLED"] = "False"
 import streamlit as st
 import numpy as np
 import chromadb
@@ -10,6 +12,12 @@ from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from rank_bm25 import BM25Okapi
 from groq import Groq
+# --- Level 1: Session Library ---
+if "pdf_library" not in st.session_state:
+    st.session_state.pdf_library = {}  # {filename: file_bytes}
+
+if "active_pdf" not in st.session_state:
+    st.session_state.active_pdf = None
 
 
 # --------------------------------------------------
@@ -435,6 +443,21 @@ with st.sidebar:
 
    
     st.divider()
+    with st.sidebar:
+        st.markdown("### 📚 My PDFs - This Session")
+        if st.session_state.pdf_library:
+            selected = st.selectbox(
+                "Select a PDF to chat with:",
+                list(st.session_state.pdf_library.keys())
+            )
+            st.session_state.active_pdf = selected
+            st.caption(f"Saved: {len(st.session_state.pdf_library)} PDFs in this session")
+            if st.button("🗑️ Clear All PDFs"):
+                st.session_state.pdf_library = {}
+                st.session_state.active_pdf = None
+                st.rerun()
+            else:
+                st.caption("No PDFs yet. Upload one to start.")   
 
     st.markdown("### 🚀 RAG Pipeline")
 
@@ -462,14 +485,30 @@ st.write(
 # --------------------------------------------------
 
 if uploaded_files:
+        # --- Save to Library ---
+    for f in uploaded_files:
+        if f.name not in st.session_state.pdf_library:
+            st.session_state.pdf_library[f.name] = f.getvalue()
+    if not st.session_state.active_pdf:
+        st.session_state.active_pdf = uploaded_files[-1].name   
 
+    # Use uploaded files, OR the PDF selected in sidebar
+files_to_process = uploaded_files
+if not files_to_process and st.session_state.active_pdf in st.session_state.pdf_library:
+    import io
+    bio = io.BytesIO(st.session_state.pdf_library[st.session_state.active_pdf])
+    bio.name = st.session_state.active_pdf
+    bio.seek(0)
+    st.write("DEBUG bytes:", len(st.session_state.pdf_library[st.session_state.active_pdf]))
+    files_to_process = [bio]
+
+if files_to_process:
     current_signature = hashlib.sha256(
         b"".join(
             hashlib.sha256(file.getvalue()).digest()
-            for file in uploaded_files
+            for file in files_to_process
         )
     ).hexdigest()
-
 else:
     current_signature = None
 
@@ -488,10 +527,10 @@ if current_signature != st.session_state.file_signature:
 # PROCESS DOCUMENTS
 # --------------------------------------------------
 
-if uploaded_files:
+if files_to_process:
 
     st.info(
-        f"📄 {len(uploaded_files)} PDF document(s) selected."
+        f"📄 {len(files_to_process)} PDF document(s) selected."
     )
 
     if st.button("⚡ Process Documents", use_container_width=True):
@@ -502,7 +541,7 @@ if uploaded_files:
                 "Extracting and processing PDF documents..."
             ):
 
-                records = process_pdfs(uploaded_files)
+                records = process_pdfs(files_to_process)
 
                 bm25 = store_documents(records)
 
